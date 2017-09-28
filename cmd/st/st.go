@@ -10,10 +10,12 @@ import (
 
 func main() {
 	flag.Set("stderrthreshold", "FATAL")
+	domain := flag.String("domain", "graph-na02-useast1.api.smartthings.com", "SmartThings domain")
 	username := flag.String("username", "", "SmartThings username")
 	password := flag.String("password", "", "SmartThings password")
 	flag.Parse()
 	client := smartthings.Client{
+		Domain:   *domain,
 		Username: *username,
 		Password: *password,
 	}
@@ -27,6 +29,6 @@ func main() {
 		fmt.Println(mode)
 
 	default:
-		glog.Fatalf("Unsupported command: %s", flag.Arg(0))
+		flag.PrintDefaults()
 	}
 }

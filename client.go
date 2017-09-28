@@ -10,20 +10,16 @@ import (
 
 // A Client is a Smartthings API Client.
 type Client struct {
-	Username string
-	Password string
+	Domain     string
+	Username   string
+	Password   string
+	httpClient *http.Client
 }
 
 // Locations gets information about locations for all accounts.
 // https://github.com/tmaiaroto/smartthings-unofficial-docs/blob/master/Documentation.md#all-locations
 func (c Client) Locations() ([]interface{}, error) {
-	httpClient, err := c.newHTTPClient()
-	if err != nil {
-		return nil, err
-	}
-	resp, err := httpClient.Get(
-		"https://graph-na02-useast1.api.smartthings.com/api/locations",
-	)
+	resp, err := c.get("/api/locations")
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +46,23 @@ func (c Client) Mode() (string, error) {
 	return mode["name"].(string), nil
 }
 
+func (c Client) get(path string) (*http.Response, error) {
+	if c.httpClient == nil {
+		var err error
+		c.httpClient, err = c.newHTTPClient()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	url := url.URL{
+		Scheme: "https",
+		Host:   c.Domain,
+		Path:   path,
+	}
+	return c.httpClient.Get(url.String())
+}
+
 func (c Client) newHTTPClient() (*http.Client, error) {
 	cookieJar, err := cookiejar.New(nil)
 	if err != nil {
@@ -65,11 +78,13 @@ func (c Client) newHTTPClient() (*http.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = httpClient.Head(
-		"https://graph-na02-useast1.api.smartthings.com/",
-	)
+	url := url.URL{
+		Scheme: "https",
+		Host:   c.Domain,
+	}
+	_, err = httpClient.Head(url.String())
 	if err != nil {
 		return nil, err
 	}
-	return httpClient, err
+	return httpClient, nil
 }
